@@ -1,0 +1,136 @@
+#lang racket
+
+(provide (all-defined-out)) ;; so we can put tests in a second file
+
+;; these definitions are simply for the purpose of being able to run the tests
+;; you MUST replace them with your solutions
+;;
+
+(define (sequence low high stride)
+  (if (> low high)
+      null
+      (range low (+ high 1) stride)
+   )
+)
+
+(define (string-append-map xs suffix)
+    (map (lambda (str) (string-append str suffix)) xs)
+)
+
+
+(define (list-nth-mod xs n)
+  (if (negative? n)
+      (error "list-nth-mod: negative number")
+      (if (null? xs)
+          (error "list-nth-mod: empty list")
+          (let* (
+                 [r (remainder n (length xs)) ] )
+            car list-tail xs r
+          )
+            
+      )
+  )
+)
+
+;;;;
+(define ones 
+   (lambda () (cons 1 ones)))
+
+(define nats
+  (letrec ([f (lambda (x)
+                (cons x (lambda () (f (+ x 1)))))])
+    (lambda () (f 1))))
+
+(define powers-of-two
+  (letrec ([f (lambda (x)
+                (cons x (lambda () (f (* x 2)))))])
+    (lambda () (f 2))))
+;;;;
+(define (stream-for-n-steps s n)
+    (if (= n 0)
+        null
+        (if (= n 1)
+            (list (car (s)))
+            (append (list (car (s))) (stream-for-n-steps (cdr (s)) (- n 1)))
+        )
+    )
+)
+
+(define funny-number-stream
+    (letrec ([f (lambda (x)
+                  (if (= (modulo x 5) 0)
+                      (cons (* x -1) (lambda () (f (+ x 1))))
+                      (cons x (lambda () (f (+ x 1))))
+                   )
+             )])
+      (lambda () (f 1)))
+)
+
+(define cat-then-dog
+    (letrec ([f (lambda (x)
+                  (if (= (modulo x 2) 0)
+                      (cons "dog.jpg" (lambda () (f (+ x 1))))
+                      (cons "cat.jpg" (lambda () (f (+ x 1))))
+                   )
+            )])
+      (lambda () (f 1)))
+)
+
+(define (stream-add-zero s)
+    (letrec ([f (lambda (x)
+                 (cons (cons 0 (car (x))) (lambda () (f (cdr (x)))))
+            )])
+      (lambda () (f s)))
+)
+
+
+(define (cycle-lists xs ys)
+    (letrec ([f (lambda (x y)
+                  (cons (cons (car x) (car y))
+                    (lambda () (f (append (cdr x) (list (car x))) (append (cdr y) (list (car y))))))
+             )])
+      (lambda () (f xs ys)))
+)
+
+(define (vector-assoc v vec)
+    (letrec ([f (lambda (pos)
+                  (cond [(>= pos (vector-length vec)) #f]
+                        [(pair? (vector-ref vec pos))
+                           (if (equal? v (car (vector-ref vec pos)))
+                               (vector-ref vec pos)
+                               (f (+ pos 1)))]
+                        [#t (f (+ pos 1))])
+                  )])
+      (f 0))
+)
+
+(define (cached-assoc xs n)
+    (letrec ([cache (make-vector n #f)]
+             [pos 0]
+             [update-cache (lambda (v)
+                             ;(print "updating cache")
+                             (vector-set! cache pos (assoc v xs))
+                             (set! pos (add1 pos))
+                             (vector-ref cache (sub1 pos)))])
+      (lambda (v)
+        (cond [(>= pos n) (set! pos 0)]
+              [#t (if (vector-assoc v cache)
+                      (vector-assoc v cache)
+                      (update-cache v)
+                   )])))                      
+)
+
+(define fibonacci3
+  (letrec([memo null] ; list of pairs (arg . result) 
+          [f (lambda (x)
+               (let ([ans (assoc x memo)])
+                 (if ans 
+                     (cdr ans)
+                     (let ([new-ans (if (or (= x 1) (= x 2))
+                                        1
+                                        (+ (f (- x 1))
+                                           (f (- x 2))))])
+                       (begin 
+                         (set! memo (cons (cons x new-ans) memo))
+                         new-ans)))))])
+    f))

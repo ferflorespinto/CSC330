@@ -1,0 +1,2 @@
+My enhancement consists of displaying the next piece that will be fall in the board. It's a bit unpolished, and it does not work properly for the first piece, but it behaves as expected for the subsequent pieces.
+
